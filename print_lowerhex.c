@@ -1,12 +1,13 @@
 #include "main.h"
 
 /**
- * print_octal - Prints octal representation of an unsigned int
+ * print_lowerhex - Prints lowercase hexadecimal representation of
+ * an unsigned int
  * @pa: Points to the list of arguments
  * @pCount: Pointer to counter
  * Return: Number of characters printed
  */
-int print_octal(va_list pa, int *pCount)
+int print_lowerhex(va_list pa, int *pCount)
 {
 unsigned int num = va_arg(pa, unsigned int);
 char buffer[32];
@@ -22,11 +23,10 @@ return (1);
 
 while (num > 0)
 {
-buffer[i] = (num % 8) + '0';
-num /= 8;
+buffer[i] = (num % 16) + (num % 16 > 9 ? 'a' - 10 : '0');
+num /= 16;
 i++;
 }
-
 i--;
 while (i >= 0)
 {

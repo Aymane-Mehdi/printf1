@@ -1,13 +1,13 @@
 #include "main.h"
 
 /**
- * print_upx - prints a decimal in hexadecimal
- * @arguments: The character to print
+ * prinnupx - prints number in uppercase hex
+ * @arguments: input string
  * @buf: buffer pointer
  * @ibuf: index for buffer pointer
  * Return: number of chars printed
  */
-int print_upx(va_list arguments, char *buf, unsigned int ibuf)
+int prinnupx(va_list arguments, char *buf, unsigned int ibuf)
 {
 	int int_input, i, isnegative, count, first_digit;
 	char *hexadecimal, *binary;
@@ -24,6 +24,8 @@ int print_upx(va_list arguments, char *buf, unsigned int ibuf)
 		int_input = (int_input * -1) - 1;
 		isnegative = 1;
 	}
+	ibuf = handl_buf(buf, '0', ibuf);
+	ibuf = handl_buf(buf, 'X', ibuf);
 	binary = malloc(sizeof(char) * (32 + 1));
 	binary = fill_binary_array(binary, int_input, isnegative, 32);
 	hexadecimal = malloc(sizeof(char) * (8 + 1));
@@ -40,5 +42,5 @@ int print_upx(va_list arguments, char *buf, unsigned int ibuf)
 	}
 	free(binary);
 	free(hexadecimal);
-	return (count);
+	return (count + 2);
 }
