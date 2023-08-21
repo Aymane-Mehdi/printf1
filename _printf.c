@@ -1,74 +1,66 @@
-#include <stdio.h>
-#include <stdarg.h>
+#include "main.h"
+
+void print_buffer(char buffer[], int *buff_ind);
 
 /**
- * Placeholder functions for printing various data types.
- * You need to implement these functions according to the data types.
+ * _printf - Printf function
+ * @format: format.
+ * Return: Printed chars.
  */
-void print_str(va_list pa, int *pCount) {
-    // Implement print_str function here
+int _printf(const char *format, ...)
+{
+	int i, printed = 0, printed_chars = 0;
+	int flags, width, precision, size, buff_ind = 0;
+	va_list list;
+	char buffer[BUFF_SIZE];
+
+	if (format == NULL)
+		return (-1);
+
+	va_start(list, format);
+
+	for (i = 0; format && format[i] != '\0'; i++)
+	{
+		if (format[i] != '%')
+		{
+			buffer[buff_ind++] = format[i];
+			if (buff_ind == BUFF_SIZE)
+				print_buffer(buffer, &buff_ind);
+			/* write(1, &format[i], 1);*/
+			printed_chars++;
+		}
+		else
+		{
+			print_buffer(buffer, &buff_ind);
+			flags = get_flags(format, &i);
+			width = get_width(format, &i, list);
+			precision = get_precision(format, &i, list);
+			size = get_size(format, &i);
+			++i;
+			printed = handle_print(format, &i, list, buffer,
+				flags, width, precision, size);
+			if (printed == -1)
+				return (-1);
+			printed_chars += printed;
+		}
+	}
+
+	print_buffer(buffer, &buff_ind);
+
+	va_end(list);
+
+	return (printed_chars);
 }
 
-void print_ch(va_list pa, int *pCount) {
-    // Implement print_ch function here
-}
+/**
+ * print_buffer - Prints the contents of the buffer if it exist
+ * @buffer: Array of chars
+ * @buff_ind: Index at which to add next char, represents the length.
+ */
+void print_buffer(char buffer[], int *buff_ind)
+{
+	if (*buff_ind > 0)
+		write(1, &buffer[0], *buff_ind);
 
-// Define other print functions for different data types
-
-// Structure to map special characters to their corresponding print functions
-struct sp_char {
-    char ch;
-    void (*fun)(va_list, int *);
-};
-
-// Define the print functions for special characters
-struct sp_char type[] = {
-    {'s', print_str}, {'c', print_ch}, /* ... define for other data types */
-    {'\0', NULL}
-};
-
-int spIndex(char ch, const struct sp_char *p) {
-    for (int i = 0; p[i].ch != '\0'; i++) {
-        if (p[i].ch == ch) {
-            return i;
-        }
-    }
-    return -1; // Character not found
-}
-
-void call_sp(const char *format, int *i, struct sp_char *p, int *pCount, va_list pa) {
-    // Implement the flag handling and function calling logic here
-}
-
-int _printf(const char *format, ...) {
-    va_list pa;
-    int i, count = 0;
-    int *pCount = &count;
-
-    if (format == NULL || (format[0] == '%' && format[1] == '\0')) {
-        return 0; // Return 0 to indicate no characters were printed
-    }
-
-    va_start(pa, format);
-    for (i = 0; format[i] != '\0'; i++) {
-        if (format[i] != '%') {
-            putchar(format[i]);
-            (*pCount)++;
-        } else if (format[i] == '%' && format[i + 1] != '%') {
-            i++;
-            call_sp(format, &i, type, pCount, pa);
-        } else if (format[i] == '%' && format[i + 1] == '%') {
-            i++;
-            putchar('%');
-            (*pCount)++;
-        }
-    }
-    va_end(pa);
-    return count;
-}
-
-int main() {
-    int result = _printf("String: %s, Character: %c, Integer: %d\n", "Hello", 'A', 42);
-    printf("Number of characters printed: %d\n", result);
-    return 0;
+	*buff_ind = 0;
 }
