@@ -1,98 +1,93 @@
 #include "main.h"
-/**
-*call_sp - fun that get the fun and call it and check
-*for signs
-*@format: the str format
-*@i: pointer to the index of our format
-*@p: pointer to out struct
-*@pCount: pointer to our counter
-*@pa:pointer to our arguments
-*/
-void call_sp(const char *format, int *i, struct sp_char *p,
-int *pCount, va_list pa)
-{
-	int j, k = 3;
-	va_list ap; /* to copy the pa */
-	int index = *i;
-	int flagg = 0;
-	sign flag[] = {{'+', postive_sign}, {' ', space_sign}, {'#', window_sign},
-		{'\0', NULL}};
-
-	va_copy(ap, pa); /* copy the list of the arguments */
-	while (signIndex(format[index], flag) != -1)
-	{
-		for (k = 0; flag[k].ch != '\0'; k++)/* if there are flags */
-		{
-			if (format[index] == flag[k].ch)
-			{
-				if (format[index] == '+' && flagg < 2)
-					flagg = 1;
-				else if (format[index] == '#')
-					flagg = 2;
-				index++;
-				break;
-			}
-		}
-	}
-	j = spIndex(format[index], p);/* get the index of the sp */
-	if (j != -1) /* make sure it match */
-	{
-		if (flag[k].ch != '\0')
-			flag[k].fun(flagg, flag[k].ch, j, ap, pCount);/* print flag */
-		p[j].fun(pa, pCount); /*print the argument  */
-		*i = index;
-	}
-	else
-	{
-		_putchar('%');
-		(*i)--;
-		*pCount += 1;
-		return;
-	}
-}
-
 
 /**
-*_printf - fun that do same as printf
-*@format: the string format
-*Return: num of charchter printed
-*/
-int _printf(const char *format, ...)
+ * print - This is the function in charge of parsing and printing out all arg
+ * int the standar input output.
+ * @format: A string containing all specifiers.
+ * @conv_list: A list of converter functions ( specifiers ).
+ * @arg_list: A list containing all the argumentents passed to the program.
+ *
+ * Return: A total count of the characters printed.
+ */
+int print(const char *format, conv_type conv_list[], va_list arg_list)
 {
-	va_list pa; /* points to the arguments list */
-	int i, count = 0;
-	int *pCount = &count;
-	spChar type[] = {
-		{'s', print_str}, {'c', print_ch}, {'d', print_int},
-		{'i', print_int}, {'b', print_bi}, {'r', print_rev},
-		{'u', print_unsigned}, {'o', print_octal}, {'S', print_nonch},
-		{'x', print_lowerhex}, {'X', print_upperhex}, {'R', print_rot13},
-		{'p', print_addr}, {'\0', NULL}};
+	int i, j, char_count, chars;
 
-	if (format == NULL || (format[0] == '%' && format[1] == '\0'))
-		return (-1);
-
-	va_start(pa, format);
+	chars = 0;
 	for (i = 0; format[i] != '\0'; i++)
 	{
-		if (format[i] != '%')
+		if (format[i] == '%')
 		{
-			_putchar(format[i]); /* print the char */
-			*pCount += 1;
-		}
-		else if (format[i] == '%' && format[i + 1] != '%')
-		{
-			i++;/* get the char after the % */
-			call_sp(format, &i, type, pCount, pa);
-
-		}
-		else if (format[i] == '%' && format[i + 1] == '%')
-		{
+			for (j = 0; conv_list[j].spec != NULL; j++)
+			{
+				if (format[i + 1] == conv_list[j].spec[0])
+				{
+					char_count = conv_list[j].func(arg_list);
+					if (char_count == -1)
+						return (-1);
+					chars += char_count;
+					break;
+				}
+			}
+			if (conv_list[j].spec == NULL && format[i + 1] != ' ')
+			{
+				if (format[i + 1] != '\0')
+				{
+				put_character(format[i]);
+				put_character(format[i + 1]);
+				chars += 2;
+				}
+				else
+				return (-1);
+			}
 			i++;
-			_putchar(format[i]);
-			*pCount += 1;
+		}
+		else
+		{
+			put_character(format[i]);
+			chars++;
 		}
 	}
-	va_end(pa);
-	return (count);
+	return (chars);
+}
+
+/**
+ * _printf - The function to print to the console
+ * @format: A string containing all the desired characters to print
+ * and conversion specifiers
+ *
+ * Return: The length of the string to print
+ */
+int _printf(const char *format, ...)
+{
+	int char_count;
+	conv_type conv_list[] = {
+		{"c", print_character},
+		{"s", print_string},
+		{"d", print_integer},
+		{"i", print_integer},
+		{"b", print_bin},
+		{"r", print_reverse_string},
+		{"R", rotter},
+		{"u", print_unsigned},
+		{"o", print_octal_number},
+		{"x", print_hexadecimal_lower},
+		{"X", print_hexadecimal_upper},
+		{"%", print_percentage},
+		{"S", print_string_non_printable},
+		{NULL, NULL}
+	};
+
+	va_list arg_list;
+
+	if (format == NULL)
+		return (-1);
+
+	va_start(arg_list, format);
+
+	char_count  = print(format, conv_list, arg_list);
+
+	va_end(arg_list);
+
+	return (char_count);
 }
