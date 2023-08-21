@@ -1,51 +1,98 @@
 #include "main.h"
+/**
+*call_sp - fun that get the fun and call it and check
+*for signs
+*@format: the str format
+*@i: pointer to the index of our format
+*@p: pointer to out struct
+*@pCount: pointer to our counter
+*@pa:pointer to our arguments
+*/
+void call_sp(const char *format, int *i, struct sp_char *p,
+int *pCount, va_list pa)
+{
+	int j, k = 3;
+	va_list ap; /* to copy the pa */
+	int index = *i;
+	int flagg = 0;
+	sign flag[] = {{'+', postive_sign}, {' ', space_sign}, {'#', window_sign},
+		{'\0', NULL}};
+
+	va_copy(ap, pa); /* copy the list of the arguments */
+	while (signIndex(format[index], flag) != -1)
+	{
+		for (k = 0; flag[k].ch != '\0'; k++)/* if there are flags */
+		{
+			if (format[index] == flag[k].ch)
+			{
+				if (format[index] == '+' && flagg < 2)
+					flagg = 1;
+				else if (format[index] == '#')
+					flagg = 2;
+				index++;
+				break;
+			}
+		}
+	}
+	j = spIndex(format[index], p);/* get the index of the sp */
+	if (j != -1) /* make sure it match */
+	{
+		if (flag[k].ch != '\0')
+			flag[k].fun(flagg, flag[k].ch, j, ap, pCount);/* print flag */
+		p[j].fun(pa, pCount); /*print the argument  */
+		*i = index;
+	}
+	else
+	{
+		_putchar('%');
+		(*i)--;
+		*pCount += 1;
+		return;
+	}
+}
+
 
 /**
- * _printf - formatted output conversion and print data.
- * @format: input string.
- *
- * Return: number of chars printed.
- */
-
+*_printf - fun that do same as printf
+*@format: the string format
+*Return: num of charchter printed
+*/
 int _printf(const char *format, ...)
 {
-	int i = 0, j = 0, buff_count = 0, prev_buff_count = 0;
-	char buffer[2000];
-	va_list arg;
-	call_t container[] = {
-		{'c', parse_char}, {'s', parse_str}, {'i', parse_int}, {'d', parse_int},
-		{'%', parse_perc}, {'b', parse_bin}, {'o', parse_oct}, {'x', parse_hex},
-		{'X', parse_X}, {'u', parse_uint}, {'R', parse_R13}, {'r', parse_rev},
-		{'\0', NULL}
-	};
+	va_list pa; /* points to the arguments list */
+	int i, count = 0;
+	int *pCount = &count;
+	spChar type[] = {
+		{'s', print_str}, {'c', print_ch}, {'d', print_int},
+		{'i', print_int}, {'b', print_bi}, {'r', print_rev},
+		{'u', print_unsigned}, {'o', print_octal}, {'S', print_nonch},
+		{'x', print_lowerhex}, {'X', print_upperhex}, {'R', print_rot13},
+		{'p', print_addr}, {'\0', NULL}};
 
-	if (!format)
+	if (format == NULL || (format[0] == '%' && format[1] == '\0'))
 		return (-1);
-	va_start(arg, format);
-	while (format && format[i] != '\0')
+
+	va_start(pa, format);
+	for (i = 0; format[i] != '\0'; i++)
 	{
-		if (format[i] == '%')
+		if (format[i] != '%')
 		{
-			i++, prev_buff_count = buff_count;
-			for (j = 0; container[j].t != '\0'; j++)
-			{
-				if (format[i] == '\0')
-					break;
-				if (format[i] == container[j].t)
-				{
-					buff_count = container[j].f(buffer, arg, buff_count);
-					break;
-				}
-			}
-			if (buff_count == prev_buff_count && format[i])
-				i--, buffer[buff_count] = format[i], buff_count++;
+			_putchar(format[i]); /* print the char */
+			*pCount += 1;
 		}
-		else
-			buffer[buff_count] = format[i], buff_count++;
-		i++;
+		else if (format[i] == '%' && format[i + 1] != '%')
+		{
+			i++;/* get the char after the % */
+			call_sp(format, &i, type, pCount, pa);
+
+		}
+		else if (format[i] == '%' && format[i + 1] == '%')
+		{
+			i++;
+			_putchar(format[i]);
+			*pCount += 1;
+		}
 	}
-	va_end(arg);
-	buffer[buff_count] = '\0';
-	print_buff(buffer, buff_count);
-	return (buff_count);
+	va_end(pa);
+	return (count);
 }
